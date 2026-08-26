@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import Leaderboard from './components/Leaderboard'
+import Modal from './components/Modal'
 import Partida from './components/Partida'
 import StartScreen from './components/StartScreen'
 import { contarPendentes, flushPendingResults, getProfile } from './lib/api'
@@ -70,15 +71,6 @@ export default function App() {
   const fecharRanking = useCallback(() => setRankingAberto(false), [])
   const onPerfilAtualizado = useCallback((p: PlayerProfile) => setPerfil(p), [])
 
-  useEffect(() => {
-    if (!rankingAberto) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') fecharRanking()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [rankingAberto, fecharRanking])
-
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 py-6 sm:py-10">
       {!isSupabaseConfigured && (
@@ -128,21 +120,13 @@ export default function App() {
         Quiz SQL Server · nível básico · dados no Supabase
       </footer>
 
-      {rankingAberto && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm sm:p-8"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Ranking global"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) fecharRanking()
-          }}
-        >
-          <div className="w-full max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-2xl sm:p-6">
-            <Leaderboard nickname={nickname.trim()} onVoltar={fecharRanking} />
-          </div>
-        </div>
-      )}
+      <Modal
+        aberto={rankingAberto}
+        onFechar={fecharRanking}
+        label="Ranking global"
+      >
+        <Leaderboard nickname={nickname.trim()} onVoltar={fecharRanking} />
+      </Modal>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { memo, useEffect } from 'react'
 import { SCORE_CONFIG } from '../lib/scoring'
 import type { Difficulty, Question } from '../types'
 
@@ -24,7 +24,13 @@ interface Props {
   onProxima: () => void
 }
 
-export default function QuestionCard({
+/**
+ * Memoizado de propósito: o timer da partida atualiza o estado a cada
+ * 100ms, e sem isto o cartão inteiro re-renderiza 10x por segundo com
+ * props idênticas. Todos os callbacks que chegam aqui são useCallback
+ * estáveis, então a comparação rasa do memo funciona.
+ */
+function QuestionCard({
   questao,
   selectedIndex,
   mostrarFeedback,
@@ -180,3 +186,5 @@ export default function QuestionCard({
     </article>
   )
 }
+
+export default memo(QuestionCard)

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { multiplicadorPorStreak } from '../lib/scoring'
 
 interface Props {
@@ -5,7 +6,7 @@ interface Props {
   streak: number
 }
 
-export default function ScoreBoard({ score, streak }: Props) {
+function ScoreBoard({ score, streak }: Props) {
   const mult = multiplicadorPorStreak(streak)
   const temCombo = mult > 1
 
@@ -47,3 +48,5 @@ export default function ScoreBoard({ score, streak }: Props) {
     </div>
   )
 }
+
+export default memo(ScoreBoard)
