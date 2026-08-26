@@ -2,92 +2,116 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Estado atual
+Quiz web de SQL Server básico com gamificação. `prd.md` é a especificação de origem —
+a seção 7 (Critérios de Aceite) é o checklist de pronto. `README.md` cobre setup e deploy.
 
-Projeto **greenfield**: o único artefato é `prd.md` (PRD v1.0, em português). Não há código,
-`package.json`, git ou `node_modules`. **`prd.md` é a fonte da verdade** — leia-o antes de
-implementar qualquer coisa; a seção 7 (Critérios de Aceite) é o checklist de pronto.
-
-Ambiente desta máquina:
-- **Node/npm não estão instalados** (nem no PATH nem em `C:\Program Files\nodejs`). Instalar Node 20.x
-  é o primeiro passo antes de qualquer `npm`.
-- O diretório fica dentro do **OneDrive** e o caminho tem espaços e acentos
-  (`OneDrive - INVESTPREV SEGURADORA SA\Área de Trabalho\...`). Sempre cite caminhos entre aspas.
-  Considere excluir `node_modules` da sincronização do OneDrive.
-- Shell padrão é PowerShell 5.1: sem `&&`/`||`, sem `??`/`?.`. Use `A; if ($?) { B }`.
-
-## Stack e comandos (após o scaffold)
-
-React 18 + TypeScript, Vite, Tailwind CSS, `@supabase/supabase-js`. Deploy: Vercel (frontend) +
-Supabase gerenciado.
+## Comandos
 
 ```
-npm install
 npm run dev            # dev server Vite
-npm run build          # -> dist/  (Output Directory na Vercel)
+npm run build          # tsc -b && vite build  ->  dist/
 npm run preview
+npm run lint           # só o typecheck (tsc --noEmit)
 ```
 
-Não há suíte de testes definida no PRD. Se adicionar testes, prefira Vitest (integra com Vite) e
-documente aqui o comando de teste único.
+Não há suíte de testes: decisão explícita para o MVP. Se adicionar testes, use Vitest
+(integra com o Vite) e comece por `scoring.ts`/`badges.ts`, que são lógica pura.
 
-`.env` (nunca commitar; criar também `.env.example`):
-```
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
-```
-Vite injeta `VITE_*` no bundle do cliente — **somente a anon key**, nunca `service_role`. A proteção
-real vem do RLS definido em `supabase/schema.sql`.
+## Ambiente desta máquina
+
+- **Node 24.19.0** em `C:\Program Files\nodejs` (instalado via winget — o pacote
+  `OpenJS.NodeJS.LTS` hoje aponta para a 24, não para a 20 do PRD §6.9; o Vite não se
+  importa). Se `node` não estiver no PATH da sessão, prefixe:
+  `export PATH="$PATH:/c/Program Files/nodejs"`.
+- O diretório fica dentro do **OneDrive** e o caminho tem espaços e acentos
+  (`OneDrive - INVESTPREV SEGURADORA SA\Área de Trabalho\...`). Cite caminhos entre aspas.
+- Shell padrão é PowerShell 5.1: sem `&&`/`||`, sem `??`/`?.`. Use `A; if ($?) { B }`.
+- Heredocs de Bash com SQL/TSX cheio de aspas simples já quebraram o parse aqui — para
+  esses arquivos, use o Write.
+
+## Estado do projeto
+
+O código do MVP está implementado e `npm run build` passa. **Não foi possível validar
+nada contra o Supabase de verdade**: falta preencher o `.env` (o usuário ainda vai
+buscar as chaves em Supabase → Project Settings → API) e aplicar
+`supabase/schema.sql` + `supabase/seed.sql` no SQL Editor. Até isso acontecer, o app
+sobe mas avisa que o Supabase não está configurado. O deploy na Vercel também está
+pendente.
 
 ## Arquitetura
 
-Fluxo de telas (state machine única em `App.tsx` ou `useQuiz`): Start → Config da partida → Quiz →
-Result → Leaderboard → rejogar.
+Duas máquinas de estado **separadas**, e confundi-las é o erro mais fácil aqui:
+`App.tsx` controla as **telas** (`inicio` | `partida`), e `hooks/useQuiz.ts` controla a
+**partida** (`loading` → `answering` → `feedback` → `finished`). O ranking é uma
+sobreposição (overlay), não uma tela — abri-lo a partir do resultado não descarta a
+partida recém-concluída.
 
-Três camadas, na ordem em que a lógica deve fluir:
+Camadas, na ordem em que a lógica flui:
 
-1. **`src/lib/api.ts`** — única porta de entrada para o Supabase. Toda a app fala com o backend por
-   `getQuestions`, `saveResult`, `getLeaderboard`, `upsertProfile`, `getProfile`. Nenhum componente
-   deve importar `supabaseClient` direto.
-2. **`src/lib/scoring.ts` + `src/lib/badges.ts`** — regras de jogo puras (sem React, sem I/O), o que
-   as torna a superfície natural para testes. O cálculo canônico está no PRD §3.2/§6.4:
-   `round((base + bonusTempo) * multStreak * (dicaUsada ? 0.5 : 1))`, com
-   `bonusTempo = round(base * 0.5 * tempoRestante/tempoTotal)`. Base: fácil 10 / médio 20 / difícil 30.
-   Erro **ou timeout** = 0 pontos e streak zerado.
-3. **`src/hooks/useQuiz.ts`** — orquestra timer, índice da pergunta, streak, acumulação de pontos e
-   coleta de badges. Componentes em `src/components/` são de apresentação.
+1. **`src/lib/api.ts`** — única fronteira com o Supabase. Nenhum componente importa
+   `supabaseClient` direto. Concentra três coisas: tradução `snake_case`↔`camelCase`,
+   embaralhamento de perguntas/alternativas, e resiliência de rede.
+2. **`src/lib/scoring.ts` + `src/lib/badges.ts`** — regras puras, sem React e sem I/O.
+   `SCORE_CONFIG` é a única fonte dos números do jogo; não espalhe constantes de
+   pontuação pelos componentes.
+3. **`src/hooks/useQuiz.ts`** — `useReducer` com todas as transições da partida. Os
+   componentes em `src/components/` são de apresentação.
 
-**Identidade sem login:** `src/lib/device.ts` gera um UUID uma vez e guarda em `localStorage`
-(`quiz_sqlserver_device_id`). Esse `device_id` é a PK de `players` e a FK de `game_results` — é o que
-liga XP/badges entre partidas. `localStorage` guarda **apenas** `device_id`, apelido e cache do último
-resultado; a verdade está no Postgres.
+`components/Partida.tsx` é dono do ciclo de vida de uma partida (rende `QuizScreen` ou
+`ResultScreen`); o `App` o remonta via `key` para começar outra, e é assim que o estado
+da anterior não vaza.
 
-**Mapeamento de nomes:** o schema Postgres é `snake_case` (`correct_index`, `time_spent_sec`,
-`xp_earned`) e os tipos TS são `camelCase` (`correctIndex`, `timeSpentSec`, `xpEarned`). A conversão
-pertence a `api.ts`; `src/types/index.ts` só descreve o formato do domínio.
+### Armadilhas reais deste código
 
-**Degradação graciosa (RNF04) é requisito de aceite, não polimento:** falha de rede não pode impedir
-jogar. Toda chamada em `api.ts` trata erro e expõe loading/erro; se `saveResult` falhar, o resultado
-vai para uma fila em `localStorage` para reenvio.
+- **Ordem de escrita.** `game_results.device_id` tem FK para `players`, então o perfil
+  precisa existir antes do insert do resultado. Use `persistirPartida()`, que faz
+  perfil→resultado na ordem certa; `saveResult()` sozinho falha para um jogador novo.
+- **A fila de reenvio marca o que falta** (`needProfile` / `needResult`). Sem isso, um
+  reenvio somaria XP duas vezes quando só o insert do resultado havia falhado.
+- **`useQuiz` persiste sob um `useRef`** porque o StrictMode do React 18 executa
+  efeitos duas vezes em desenvolvimento — sem o guard, cada partida gravaria duas vezes.
+- **O timeout é resolvido dentro do reducer** (`TICK` com tempo ≤ 0 registra a resposta),
+  não por um dispatch extra do efeito. Isso evita corrida entre o tick e o clique.
+- **Embaralhar alternativas recalcula `correctIndex` no mesmo passo** — separar as duas
+  operações é o jeito clássico de quebrar o gabarito. Verdadeiro/Falso não é embaralhado.
+- **`localStorage` é sempre acessado via `lib/storage.ts`**, que engole exceções: em modo
+  privado o próprio getter lança, e o jogo não pode cair por isso.
 
-## Dados
+### Dados
 
-`supabase/schema.sql` (tabelas `questions`, `players`, `game_results` + RLS/policies) e
-`supabase/seed.sql` (mín. 20 perguntas) são versionados e aplicados manualmente no projeto Supabase —
-não há migrations automatizadas no MVP. As perguntas são conteúdo editável por SQL: **adicionar
-pergunta nunca deve exigir mudança de código** (RNF05). Temas obrigatórios da seed no PRD §6.8.
+`supabase/schema.sql` e `supabase/seed.sql` são versionados, idempotentes e aplicados à
+mão no SQL Editor — não há migrations automatizadas. Adicionar pergunta é inserir linha
+em `questions`, **nunca** mudar código (RNF05).
 
-As policies de escrita estão abertas para `anon` porque o MVP não tem auth (PRD §6.7, nota de
-segurança) — decisão consciente para uso interno. Não "corrija" isso sem migrar para Supabase Auth,
-que é item de roadmap.
+O campo `topic` das perguntas é semântico: `badges.ts` procura "JOIN" nele para a badge
+Mestre do JOIN. Mantenha consistente ao adicionar perguntas.
+
+As policies de escrita estão abertas para `anon` porque o MVP não tem auth (PRD §6.7,
+nota de segurança) — decisão consciente para uso interno. Não "corrija" isso sem migrar
+para Supabase Auth, que é item de roadmap.
+
+`localStorage` guarda apenas apoio (chaves em `lib/storage.ts`): `device_id`, apelido,
+último resultado, cache de perguntas e fila de pendências. A verdade está no Postgres.
+O `device_id` (UUID gerado uma vez) é a PK de `players` e a FK de `game_results` — é o
+que liga XP e badges entre partidas, sem login.
+
+## Decisões onde o PRD era omisso
+
+Se o usuário questionar algum destes comportamentos, é aqui que a escolha foi feita —
+não são bugs:
+
+- `xpEarned = score` da partida (o PRD define as faixas em §3.3, mas não a conversão).
+- Badge Velocista conta 5 respostas **corretas** com menos de 5s cada.
+- Badge Mestre do JOIN exige que a partida tenha tido ao menos uma pergunta de JOIN.
+- Sem sistema de vidas (PRD §3.5 marca como opcional).
+- Sem `react-router`: navegação é máquina de estados. O `vercel.json` com rewrite de SPA
+  entra de todo modo, conforme §6.9.
+- Tailwind 4 via `@tailwindcss/vite` (o PRD sugeria a rota PostCSS, que é a da v3).
 
 ## Contradições conhecidas no PRD
 
-O PRD é v1.0 e tem resquícios de uma versão anterior 100% client-side. **Supabase vence** (§2.3, §6,
-e os critérios de aceite de §7 exigem explicitamente leitura/escrita no Supabase). Trate como
-obsoletos: RF01 ("carregar de arquivo JSON"), RF08/RF09 ("persistir ranking no `localStorage`") e
-§8 ("MVP 100% client-side, sem dependência de backend"). Se algo mais parecer conflitante, prefira
-§6 e §7.
-
-O PRD §6.2 sugere a pasta `quiz-sqlserver/`. O diretório atual já é a raiz do projeto — confirme com
-o usuário antes de criar uma subpasta extra.
+O PRD é v1.0 e tem resquícios de uma versão anterior 100% client-side. **Supabase
+vence** (§2.3, §6, e os critérios de aceite de §7 exigem leitura/escrita no Supabase).
+Trate como obsoletos: RF01 ("carregar de arquivo JSON"), RF08/RF09 ("persistir ranking
+no `localStorage`") e §8 ("MVP 100% client-side, sem dependência de backend"). Em
+qualquer outro conflito, prefira §6 e §7.
