@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Write-Output \"=== node/npm ===\"; \\(Get-Command node -ErrorAction SilentlyContinue\\).Source; \\(Get-Command npm -ErrorAction SilentlyContinue\\).Source; node -v 2>$null; npm -v 2>$null; Write-Output \"=== claude no PATH ===\"; \\(Get-Command claude -ErrorAction SilentlyContinue\\).Source; Write-Output \"=== npm global prefix ===\"; npm config get prefix 2>$null)",
+      "PowerShell($bin = \"$env:USERPROFILE\\\\.local\\\\bin\"; $userPath = [Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); if \\([string]::IsNullOrEmpty\\($userPath\\)\\) { $newPath = $bin } elseif \\($userPath -split ';' -contains $bin\\) { $newPath = $userPath; Write-Output \"Ja continha; nada a fazer.\" } else { $newPath = \\($userPath.TrimEnd\\(';'\\)\\) + ';' + $bin }; [Environment]::SetEnvironmentVariable\\(\"Path\", $newPath, \"User\"\\); $env:Path = $env:Path + ';' + $bin; Write-Output \"PATH do usuario atualizado.\"; Write-Output \"=== testando 'claude' pelo nome curto na sessao atual ===\"; claude --version)"
+    ]
+  }
+}

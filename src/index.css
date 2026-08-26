@@ -1,0 +1,90 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-fundo: #0b1120;
+  --color-cartao: #151d31;
+  --color-borda: #24304d;
+  --color-primaria: #38bdf8;
+  --color-acerto: #22c55e;
+  --color-erro: #ef4444;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 10%, #1e3a5f 0%, transparent 45%),
+    radial-gradient(circle at 85% 90%, #312e5f 0%, transparent 45%),
+    var(--color-fundo);
+  color: #e2e8f5;
+  font-family:
+    'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Foco visível em todo elemento interativo (RNF03). */
+:focus-visible {
+  outline: 2px solid var(--color-primaria);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tremer {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes pulsar {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.anim-surgir {
+  animation: surgir 0.25s ease-out both;
+}
+.anim-tremer {
+  animation: tremer 0.3s ease-in-out;
+}
+.anim-pulsar {
+  animation: pulsar 0.35s ease-in-out;
+}
+
+/* Respeita quem pediu menos movimento no sistema. */
+@media (prefers-reduced-motion: reduce) {
+  .anim-surgir,
+  .anim-tremer,
+  .anim-pulsar {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
