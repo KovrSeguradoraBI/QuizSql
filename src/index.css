@@ -20,10 +20,44 @@ body {
     radial-gradient(circle at 15% 10%, #1e3a5f 0%, transparent 45%),
     radial-gradient(circle at 85% 90%, #312e5f 0%, transparent 45%),
     var(--color-fundo);
-  color: #e2e8f5;
+  color: var(--color-slate-100);
   font-family:
     'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* =====================================================================
+   Tema "preto": preto neutro, sem os gradientes.
+
+   Redefine a escala slate do Tailwind em vez de tocar os componentes.
+   Toda utilitária `bg-slate-900` compila para `var(--color-slate-900)`, e
+   as variantes com opacidade usam `color-mix()` sobre a mesma variável —
+   então trocar as variáveis aqui repinta os 9 componentes de uma vez.
+
+   Seletor `html[...]` (0,1,1) supera o `:root` (0,1,0) onde o Tailwind
+   declara a escala, então a ordem de import deixa de importar.
+   ===================================================================== */
+html[data-tema='preto'] {
+  --color-slate-50: #fafafa;
+  --color-slate-100: #ededf0; /* texto principal */
+  --color-slate-200: #dcdce0;
+  --color-slate-300: #b9b9c1;
+  --color-slate-400: #94949e; /* texto secundário */
+  --color-slate-500: #7d7d87;
+  --color-slate-600: #57575f;
+  --color-slate-700: #26262b; /* bordas */
+  --color-slate-800: #1a1a1e;
+  --color-slate-900: #0d0d0f; /* cartões */
+  --color-slate-950: #000000; /* fundo */
+
+  --color-fundo: #000000;
+  --color-cartao: #0d0d0f;
+  --color-borda: #26262b;
+}
+
+html[data-tema='preto'] body {
+  /* Chapado: é o que diferencia este tema do azulado. */
+  background: var(--color-fundo);
 }
 
 /* Foco visível em todo elemento interativo (RNF03). */

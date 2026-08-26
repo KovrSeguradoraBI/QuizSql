@@ -11,6 +11,9 @@ export const KEYS = {
   lastResult: 'quiz_sqlserver_last_result',
   questionsCache: 'quiz_sqlserver_questions_cache',
   pendingResults: 'quiz_sqlserver_pending_results',
+  // ATENÇÃO: o script inline do index.html lê esta chave literalmente,
+  // para aplicar o tema antes do primeiro paint. Mudar aqui exige mudar lá.
+  tema: 'quiz_sqlserver_tema',
 } as const
 
 export function readRaw(key: string): string | null {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import BotaoTema from './components/BotaoTema'
 import Leaderboard from './components/Leaderboard'
 import Modal from './components/Modal'
 import Partida from './components/Partida'
@@ -73,6 +74,10 @@ export default function App() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 py-6 sm:py-10">
+      <div className="mb-4 flex justify-end">
+        <BotaoTema />
+      </div>
+
       {!isSupabaseConfigured && (
         <p className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
           Supabase não configurado. Copie <code>.env.example</code> para{' '}
@@ -116,7 +121,9 @@ export default function App() {
         )}
       </main>
 
-      <footer className="mt-8 text-center text-xs text-slate-600">
+      {/* slate-400, não slate-600: em slate-600 o contraste ficava em
+          2,5:1 no tema azul e 2,9:1 no preto, abaixo do mínimo do RNF03. */}
+      <footer className="mt-8 text-center text-xs text-slate-400">
         Quiz SQL Server · nível básico · dados no Supabase
       </footer>
 

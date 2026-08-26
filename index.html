@@ -1,9 +1,23 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-tema="azul">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quiz SQL Server</title>
+    <script>
+      // Aplica o tema salvo ANTES do primeiro paint. Sem isto a página
+      // pinta no tema padrão e só troca quando o React monta, produzindo
+      // um flash azul em quem escolheu o preto.
+      // A chave precisa casar com KEYS.tema em src/lib/storage.ts.
+      try {
+        var t = localStorage.getItem('quiz_sqlserver_tema')
+        if (t === 'azul' || t === 'preto') {
+          document.documentElement.dataset.tema = t
+        }
+      } catch (e) {
+        // Modo privado ou cookies bloqueados: segue no tema padrão.
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
