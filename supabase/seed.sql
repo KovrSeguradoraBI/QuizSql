@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Quiz SQL Server - banco de perguntas inicial (PRD secao 6.8)
--- 25 perguntas de nivel basico: 8 faceis, 9 medias, 8 dificeis.
+-- 25 perguntas de nivel basico: 8 faceis, 10 medias, 7 dificeis.
 -- Idempotente: pode ser reexecutado (on conflict do update).
 -- Aplicar DEPOIS de schema.sql, no SQL Editor do Supabase.
 --
@@ -173,5 +173,5 @@ on conflict (id) do update set
   explanation   = excluded.explanation,
   hint          = excluded.hint;
 
--- Conferencia rapida (deve retornar facil 8 / medio 9 / dificil 8)
+-- Conferencia rapida (deve retornar facil 8 / medio 10 / dificil 7)
 -- select difficulty, count(*) from questions group by difficulty order by 1;

@@ -49,7 +49,7 @@ configurado e não consegue carregar perguntas na primeira execução.
 Aplique no **SQL Editor** do Supabase, nesta ordem:
 
 1. `supabase/schema.sql` — tabelas, índice e políticas de RLS
-2. `supabase/seed.sql` — 25 perguntas (8 fáceis, 9 médias, 8 difíceis)
+2. `supabase/seed.sql` — 25 perguntas (8 fáceis, 10 médias, 7 difíceis)
 
 Os dois são idempotentes e podem ser reexecutados. Para adicionar perguntas, basta
 inserir linhas em `questions` — nenhuma mudança de código é necessária.
