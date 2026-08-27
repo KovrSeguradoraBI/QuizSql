@@ -9,7 +9,7 @@ import type { Difficulty, Faixa, ScoreConfig } from '../types'
  */
 export const SCORE_CONFIG: ScoreConfig = {
   basePoints: { facil: 10, medio: 20, dificil: 30 },
-  timePerQuestionSec: 20,
+  timePerQuestionSec: 30,
   timeBonusFactor: 0.5,
   // Ordem decrescente: o primeiro limiar atingido é o que vale.
   streakThresholds: [
